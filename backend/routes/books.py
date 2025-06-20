@@ -18,7 +18,8 @@ def allowed_file(filename):
 def get_books():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute('SELECT id, title, author, stock, image FROM books')
+    # Tambahkan description di SELECT
+    cursor.execute('SELECT id, title, author, stock, image, description FROM books')
     books = cursor.fetchall()
     cursor.close()
     conn.close()
@@ -30,28 +31,38 @@ def search_books():
     title = request.args.get('title', '')
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute('SELECT id, title, author, stock, image FROM books WHERE title LIKE %s', (f'%{title}%',))
+    # Tambahkan description di SELECT
+    cursor.execute('SELECT id, title, author, stock, image, description FROM books WHERE title LIKE %s', (f'%{title}%',))
     books = cursor.fetchall()
     cursor.close()
     conn.close()
     return jsonify(books), 200
 
+@books_bp.route('/<int:id>', methods=['GET'])
+@jwt_required()
+def get_book_detail(id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute('SELECT id, title, author, stock, image, description FROM books WHERE id = %s', (id,))
+    book = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    if not book:
+        return jsonify({'error': 'Book not found'}), 404
+    return jsonify(book), 200
+
 @books_bp.route('/', methods=['POST'])
 @jwt_required()
 @admin_required
 def add_book():
-    print("📥 POST /api/books/ diterima")
-    print("📄 request.form:", request.form)
-    print("📁 request.files:", request.files)
-
     if not request.form.get('title') or not request.form.get('author'):
-        print("❌ Title atau author kosong")
         return jsonify({'error': 'Title and author are required'}), 400
     
     title = request.form.get('title').strip()
     author = request.form.get('author').strip()
     stock = request.form.get('stock', type=int, default=0)
-    
+    description = request.form.get('description', '').strip()  # Ambil deskripsi
+
     if stock < 0:
         return jsonify({'error': 'Stock cannot be negative'}), 400
 
@@ -69,8 +80,9 @@ def add_book():
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute('INSERT INTO books (title, author, stock, image) VALUES (%s, %s, %s, %s)', 
-                       (title, author, stock, image_url))
+        # Tambahkan description ke INSERT
+        cursor.execute('INSERT INTO books (title, author, stock, image, description) VALUES (%s, %s, %s, %s, %s)', 
+                    (title, author, stock, image_url, description))
         conn.commit()
     except Exception as e:
         conn.rollback()
@@ -90,7 +102,8 @@ def update_book(id):
     title = request.form.get('title').strip()
     author = request.form.get('author').strip()
     stock = request.form.get('stock', type=int)
-    
+    description = request.form.get('description', '').strip()  # Ambil deskripsi
+
     if stock is None or stock < 0:
         return jsonify({'error': 'Invalid or negative stock value'}), 400
 
@@ -107,11 +120,17 @@ def update_book(id):
     cursor = conn.cursor()
     try:
         if image_url:
-            cursor.execute('UPDATE books SET title = %s, author = %s, stock = %s, image = %s WHERE id = %s', 
-                           (title, author, stock, image_url, id))
+            # Update dengan gambar dan deskripsi
+            cursor.execute(
+                'UPDATE books SET title = %s, author = %s, stock = %s, image = %s, description = %s WHERE id = %s', 
+                (title, author, stock, image_url, description, id)
+            )
         else:
-            cursor.execute('UPDATE books SET title = %s, author = %s, stock = %s WHERE id = %s', 
-                           (title, author, stock, id))
+            # Update tanpa gambar, tetap update deskripsi
+            cursor.execute(
+                'UPDATE books SET title = %s, author = %s, stock = %s, description = %s WHERE id = %s', 
+                (title, author, stock, description, id)
+            )
         if cursor.rowcount == 0:
             return jsonify({'error': 'Book not found'}), 404
         conn.commit()

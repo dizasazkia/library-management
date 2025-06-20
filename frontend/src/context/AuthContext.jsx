@@ -4,22 +4,29 @@ import { jwtDecode } from 'jwt-decode';
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('user');
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [loading, setLoading] = useState(true);
 
-// ...existing code...
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       try {
         const decoded = jwtDecode(token);
-        // Pastikan kita selalu mendapatkan object yang konsisten
         const userData = typeof decoded.sub === "string" ? JSON.parse(decoded.sub) : decoded.sub;
         setUser({ id: userData.id, role: userData.role });
+        localStorage.setItem('user', JSON.stringify({ id: userData.id, role: userData.role }));
       } catch (error) {
         console.error('Token decoding error:', error);
         logout();
       }
+    } else {
+      setUser(null);
+      localStorage.removeItem('user');
     }
+    setLoading(false);
   }, []);
 
   const login = (token) => {
@@ -27,16 +34,17 @@ export const AuthProvider = ({ children }) => {
     const decoded = jwtDecode(token);
     const userData = typeof decoded.sub === "string" ? JSON.parse(decoded.sub) : decoded.sub;
     setUser({ id: userData.id, role: userData.role });
+    localStorage.setItem('user', JSON.stringify({ id: userData.id, role: userData.role }));
   };
-
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

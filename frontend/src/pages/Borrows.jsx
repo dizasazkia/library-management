@@ -43,7 +43,16 @@ const Borrows = () => {
                 <td>{borrow.id}</td>
                 <td>{borrow.username}</td>
                 <td>{borrow.title}</td>
-                <td>{borrow.borrow_date}</td>
+                <td>
+                  {borrow.borrow_date
+                    ? new Date(borrow.borrow_date).toLocaleDateString('id-ID', {
+                        weekday: 'short',
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                      })
+                    : '-'}
+                </td>
                 <td>{borrow.status}</td>
               </tr>
             ))}

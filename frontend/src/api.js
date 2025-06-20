@@ -23,6 +23,8 @@ export const login = (username, password) =>
 
 export const getBooks = () => api.get('/books/');
 
+export const getBookById = (id) => api.get(`/books/${id}`);
+
 export const searchBooks = (title) => api.get(`/books/search?title=${title}`);
 
 export const addBook = (bookData) =>

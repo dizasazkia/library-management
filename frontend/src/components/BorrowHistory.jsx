@@ -63,33 +63,39 @@ const BorrowHistory = () => {
               <tr key={`${borrow.id}-${borrow.return_status}`}>
                 <td>{borrow.id}</td>
                 <td>{borrow.title}</td>
-                <td>{borrow.borrow_date}</td>
                 <td>
-                  {borrow.status}
-                  {borrow.return_status === 'pending' && (
-                    <span className="ml-2 badge badge-warning">Menunggu Konfirmasi</span>
-                  )}
-                  {borrow.status === 'dikembalikan' && (
-                    <span className="ml-2 badge badge-success">Dikembalikan</span>
+                  {borrow.borrow_date
+                    ? new Date(borrow.borrow_date).toLocaleDateString('id-ID', {
+                        weekday: 'short',
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                      })
+                    : '-'}
+                </td>
+                <td>
+                  {borrow.status === 'dikembalikan' ? (
+                    <span className="badge badge-success">Dikembalikan</span>
+                  ) : borrow.return_status === 'pending' ? (
+                    <span className="badge badge-warning">Menunggu Konfirmasi</span>
+                  ) : (
+                    <span className="badge badge-info">Dipinjam</span>
                   )}
                 </td>
                 <td>
-                  {user?.role === 'mahasiswa' &&
-                    borrow.status === 'dipinjam' &&
-                    (!borrow.return_status || borrow.return_status === null) && (
-                      <button
-                        className="btn btn-primary btn-xs"
-                        onClick={() => handleRequestReturn(borrow.id)}
-                        disabled={processing === borrow.id}
-                      >
-                        {processing === borrow.id ? 'Memproses...' : 'Ajukan Pengembalian'}
-                      </button>
-                    )}
-                  {borrow.return_status === 'pending' && (
-                    <span className="text-xs text-yellow-600">Menunggu konfirmasi admin</span>
-                  )}
-                  {borrow.status === 'dikembalikan' && (
-                    <span className="text-xs text-green-600">Sudah dikembalikan</span>
+                  {borrow.status === 'dikembalikan' ? (
+                    <span className="text-green-600">Sudah dikembalikan</span>
+                  ) : borrow.return_status === 'pending' ? (
+                    <span className="text-yellow-600">Menunggu konfirmasi admin</span>
+                  ) : (
+                    user?.role === 'mahasiswa' &&
+                    <button
+                      className="btn btn-primary btn-xs"
+                      onClick={() => handleRequestReturn(borrow.id)}
+                      disabled={processing === borrow.id}
+                    >
+                      {processing === borrow.id ? 'Memproses...' : 'Ajukan Pengembalian'}
+                    </button>
                   )}
                 </td>
               </tr>

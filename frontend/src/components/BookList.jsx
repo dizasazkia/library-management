@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext, useRef } from 'react';
 import { getBooks, searchBooks, addBook, updateBook, deleteBook, borrowBook } from '../api';
 import { AuthContext } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 
 const BookList = () => {
   const { user } = useContext(AuthContext);
@@ -54,6 +55,7 @@ const BookList = () => {
       formData.append('title', newBook.title.trim());
       formData.append('author', newBook.author.trim());
       formData.append('stock', Number(newBook.stock));
+      formData.append('description', newBook.description || '');
       if (newBook.file) {
         formData.append('file', newBook.file);
       }
@@ -85,6 +87,7 @@ const BookList = () => {
       formData.append('title', newBook.title.trim());
       formData.append('author', newBook.author.trim());
       formData.append('stock', Number(newBook.stock));
+      formData.append('description', newBook.description || '');
       if (newBook.file) {
         formData.append('file', newBook.file);
       }
@@ -257,6 +260,18 @@ const BookList = () => {
 
             <div className="form-control">
               <label className="label">
+                <span className="label-text">Deskripsi</span>
+              </label>
+              <textarea
+                className="textarea textarea-bordered"
+                placeholder="Deskripsi buku"
+                value={newBook.description || ''}
+                onChange={(e) => setNewBook({ ...newBook, description: e.target.value })}
+              />
+            </div>
+
+            <div className="form-control">
+              <label className="label">
                 <span className="label-text">Sampul Buku</span>
               </label>
               <input
@@ -329,6 +344,9 @@ const BookList = () => {
               <p><span className="font-semibold">Penulis:</span> {book.author}</p>
               <p><span className="font-semibold">Stok:</span> {book.stock}</p>
               <div className="card-actions justify-end mt-2">
+                <Link to={`/books/${book.id}`} className="btn btn-info btn-sm">
+                  Detail
+                </Link>
                 {user.role === 'mahasiswa' && book.stock > 0 && (
                   <button
                     className="btn btn-primary btn-sm"
