@@ -79,6 +79,13 @@ def borrow_book():
             (user_id, book_id, borrow_date, return_date, status) 
             VALUES (%s, %s, %s, %s, 'dipinjam')
         ''', (user_id, book_id, borrow_date, return_date))
+        borrow_id = cursor.lastrowid
+
+        # Insert to returns table with pending status, return_date NULL
+        cursor.execute('''
+            INSERT INTO returns (borrow_id, status) VALUES (%s, 'pending')
+        ''', (borrow_id,))
+
         cursor.execute('UPDATE books SET stock = stock - 1 WHERE id = %s', (book_id,))
         conn.commit()
         cursor.execute('SELECT title, stock FROM books WHERE id = %s', (book_id,))
@@ -114,7 +121,6 @@ def get_borrows():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        # Perbaikan: tambahkan r.id AS return_id
         cursor.execute('''
             SELECT 
                 b.id, 
@@ -126,7 +132,8 @@ def get_borrows():
                 b.return_date,
                 b.status,
                 r.id AS return_id,
-                r.status AS return_status
+                r.status AS return_status,
+                r.return_date AS actual_return_date
             FROM borrows b 
             JOIN users u ON b.user_id = u.id 
             JOIN books bk ON b.book_id = bk.id
@@ -166,7 +173,6 @@ def get_borrow_history():
 
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        # Perbaikan: tambahkan r.id AS return_id
         cursor.execute('''
             SELECT 
                 b.id,
@@ -176,7 +182,8 @@ def get_borrow_history():
                 b.return_date,
                 b.status,
                 r.id AS return_id,
-                r.status AS return_status
+                r.status AS return_status,
+                r.return_date AS actual_return_date
             FROM borrows b 
             JOIN books bk ON b.book_id = bk.id 
             LEFT JOIN returns r ON r.borrow_id = b.id

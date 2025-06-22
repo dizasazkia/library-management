@@ -23,6 +23,8 @@ export const login = (username, password) =>
 
 export const getBooks = () => api.get('/books/');
 
+export const getCategories = () => api.get('/books/categories');
+
 export const getBookById = (id) => api.get(`/books/${id}`);
 
 export const searchBooks = (title) => api.get(`/books/search?title=${title}`);
@@ -33,6 +35,11 @@ export const addBook = (bookData) =>
       'Content-Type': 'multipart/form-data',
     },
   });
+
+export const addCategory = (data) => 
+  api.post('/books/categories', data, {
+  headers: { 'Content-Type': 'application/json' },
+});
 
 export const updateBook = (id, bookData) =>
   api.put(`/books/${id}`, bookData, {

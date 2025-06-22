@@ -17,6 +17,7 @@ const BookDetail = () => {
         <h2 className="text-2xl font-bold mb-2">{book.title}</h2>
         <p className="mb-2"><b>Penulis:</b> {book.author}</p>
         <p className="mb-2"><b>Stok:</b> {book.stock}</p>
+        <p className="mb-2"><b>Kategori:</b> {book.category || '-'}</p>
         <p className="mb-2"><b>Deskripsi:</b> {book.description}</p>
         {book.image && <img src={`http://localhost:5000${book.image}`} alt={book.title} className="w-64 mt-4" />}
     </div>

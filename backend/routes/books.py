@@ -13,13 +13,53 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# --- KATEGORI ENDPOINTS ---
+
+@books_bp.route('/categories', methods=['GET'])
+@jwt_required()
+def get_categories():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute('SELECT id, name FROM categories')
+    categories = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return jsonify(categories), 200
+
+@books_bp.route('/categories', methods=['POST'])
+@jwt_required()
+@admin_required
+def add_category():
+    name = request.json.get('name', '').strip()
+    if not name:
+        return jsonify({'error': 'Nama kategori wajib diisi'}), 400
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute('INSERT INTO categories (name) VALUES (%s)', (name,))
+        conn.commit()
+        category_id = cursor.lastrowid
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+    return jsonify({'id': category_id, 'name': name}), 201
+
+# --- BUKU ENDPOINTS ---
+
 @books_bp.route('/', methods=['GET'])
 @jwt_required()
 def get_books():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    # Tambahkan description di SELECT
-    cursor.execute('SELECT id, title, author, stock, image, description FROM books')
+    # JOIN ke tabel kategori untuk ambil nama kategori
+    cursor.execute('''
+        SELECT b.id, b.title, b.author, b.stock, b.image, b.description, b.category_id, c.name AS category
+        FROM books b
+        LEFT JOIN categories c ON b.category_id = c.id
+    ''')
     books = cursor.fetchall()
     cursor.close()
     conn.close()
@@ -31,8 +71,12 @@ def search_books():
     title = request.args.get('title', '')
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    # Tambahkan description di SELECT
-    cursor.execute('SELECT id, title, author, stock, image, description FROM books WHERE title LIKE %s', (f'%{title}%',))
+    cursor.execute('''
+        SELECT b.id, b.title, b.author, b.stock, b.image, b.description, b.category_id, c.name AS category
+        FROM books b
+        LEFT JOIN categories c ON b.category_id = c.id
+        WHERE b.title LIKE %s
+    ''', (f'%{title}%',))
     books = cursor.fetchall()
     cursor.close()
     conn.close()
@@ -43,7 +87,12 @@ def search_books():
 def get_book_detail(id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute('SELECT id, title, author, stock, image, description FROM books WHERE id = %s', (id,))
+    cursor.execute('''
+        SELECT b.id, b.title, b.author, b.stock, b.image, b.description, b.category_id, c.name AS category
+        FROM books b
+        LEFT JOIN categories c ON b.category_id = c.id
+        WHERE b.id = %s
+    ''', (id,))
     book = cursor.fetchone()
     cursor.close()
     conn.close()
@@ -61,7 +110,8 @@ def add_book():
     title = request.form.get('title').strip()
     author = request.form.get('author').strip()
     stock = request.form.get('stock', type=int, default=0)
-    description = request.form.get('description', '').strip()  # Ambil deskripsi
+    description = request.form.get('description', '').strip()
+    category_id = request.form.get('category_id') or None
 
     if stock < 0:
         return jsonify({'error': 'Stock cannot be negative'}), 400
@@ -80,9 +130,10 @@ def add_book():
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        # Tambahkan description ke INSERT
-        cursor.execute('INSERT INTO books (title, author, stock, image, description) VALUES (%s, %s, %s, %s, %s)', 
-                    (title, author, stock, image_url, description))
+        cursor.execute(
+            'INSERT INTO books (title, author, stock, image, description, category_id) VALUES (%s, %s, %s, %s, %s, %s)', 
+            (title, author, stock, image_url, description, category_id)
+        )
         conn.commit()
     except Exception as e:
         conn.rollback()
@@ -102,7 +153,8 @@ def update_book(id):
     title = request.form.get('title').strip()
     author = request.form.get('author').strip()
     stock = request.form.get('stock', type=int)
-    description = request.form.get('description', '').strip()  # Ambil deskripsi
+    description = request.form.get('description', '').strip()
+    category_id = request.form.get('category_id') or None
 
     if stock is None or stock < 0:
         return jsonify({'error': 'Invalid or negative stock value'}), 400
@@ -120,16 +172,14 @@ def update_book(id):
     cursor = conn.cursor()
     try:
         if image_url:
-            # Update dengan gambar dan deskripsi
             cursor.execute(
-                'UPDATE books SET title = %s, author = %s, stock = %s, image = %s, description = %s WHERE id = %s', 
-                (title, author, stock, image_url, description, id)
+                'UPDATE books SET title = %s, author = %s, stock = %s, image = %s, description = %s, category_id = %s WHERE id = %s', 
+                (title, author, stock, image_url, description, category_id, id)
             )
         else:
-            # Update tanpa gambar, tetap update deskripsi
             cursor.execute(
-                'UPDATE books SET title = %s, author = %s, stock = %s, description = %s WHERE id = %s', 
-                (title, author, stock, description, id)
+                'UPDATE books SET title = %s, author = %s, stock = %s, description = %s, category_id = %s WHERE id = %s', 
+                (title, author, stock, description, category_id, id)
             )
         if cursor.rowcount == 0:
             return jsonify({'error': 'Book not found'}), 404

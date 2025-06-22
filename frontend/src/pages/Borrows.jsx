@@ -35,6 +35,7 @@ const Borrows = () => {
               <th>Judul Buku</th>
               <th>Tanggal Pinjam</th>
               <th>Status</th>
+              <th>Tanggal Pengembalian</th> {/* Tambahkan kolom ini */}
             </tr>
           </thead>
           <tbody>
@@ -54,6 +55,16 @@ const Borrows = () => {
                     : '-'}
                 </td>
                 <td>{borrow.status}</td>
+                <td>
+                  {borrow.status === 'dikembalikan' && borrow.actual_return_date
+                    ? new Date(borrow.actual_return_date).toLocaleDateString('id-ID', {
+                        weekday: 'short',
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                      })
+                    : '-'}
+                </td>
               </tr>
             ))}
           </tbody>

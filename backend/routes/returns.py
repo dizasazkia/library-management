@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from config.db import get_db_connection
 from flask_jwt_extended import jwt_required
 from routes import admin_required
+from datetime import datetime
 
 returns_bp = Blueprint('returns', __name__)
 
@@ -25,7 +26,8 @@ def request_return():
 def confirm_return(id):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute('UPDATE returns SET status = %s WHERE id = %s', ('confirmed', id))
+    # Set return_date ke tanggal hari ini saat dikonfirmasi
+    cursor.execute('UPDATE returns SET status = %s, return_date = CURDATE() WHERE id = %s', ('confirmed', id))
     cursor.execute('UPDATE borrows SET status = %s WHERE id = (SELECT borrow_id FROM returns WHERE id = %s)', ('dikembalikan', id))
     cursor.execute('UPDATE books SET stock = stock + 1 WHERE id = (SELECT book_id FROM borrows WHERE id = (SELECT borrow_id FROM returns WHERE id = %s))', (id,))
     conn.commit()

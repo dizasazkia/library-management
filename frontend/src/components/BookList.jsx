@@ -1,13 +1,15 @@
 import { useState, useEffect, useContext, useRef } from 'react';
 import { getBooks, searchBooks, addBook, updateBook, deleteBook, borrowBook } from '../api';
+import { getCategories, addCategory } from '../api';
 import { AuthContext } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 
 const BookList = () => {
   const { user } = useContext(AuthContext);
   const [books, setBooks] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [search, setSearch] = useState('');
-  const [newBook, setNewBook] = useState({ title: '', author: '', stock: '', file: null });
+  const [newBook, setNewBook] = useState({ title: '', author: '', stock: '', file: null, category_id: '', newCategory: '', description: '' });
   const [preview, setPreview] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,6 +27,10 @@ const BookList = () => {
       return () => clearTimeout(timer);
     }
   }, [error]);
+
+  useEffect(() => {
+    getCategories().then(res => setCategories(res.data));
+  }, []);
 
   const fetchBooks = async () => {
     setLoading(true);
@@ -48,14 +54,31 @@ const BookList = () => {
       setError('Stok harus berupa angka tidak negatif');
       return;
     }
+    if (!newBook.category_id) {
+      setError('Kategori harus dipilih');
+      return;
+    }
+    if (newBook.category_id === "other" && !newBook.newCategory.trim()) {
+      setError('Kategori baru harus diisi');
+      return;
+    }
 
     setOperationLoading(true);
     try {
+      let categoryId = newBook.category_id;
+      if (categoryId === "other" && newBook.newCategory) {
+        const res = await addCategory({ name: newBook.newCategory });
+        categoryId = res.data.id;
+        // Refresh kategori agar langsung muncul di dropdown
+        getCategories().then(res => setCategories(res.data));
+      }
+
       const formData = new FormData();
       formData.append('title', newBook.title.trim());
       formData.append('author', newBook.author.trim());
       formData.append('stock', Number(newBook.stock));
       formData.append('description', newBook.description || '');
+      formData.append('category_id', categoryId);
       if (newBook.file) {
         formData.append('file', newBook.file);
       }
@@ -80,14 +103,30 @@ const BookList = () => {
       setError('Stok harus berupa angka tidak negatif');
       return;
     }
+    if (!newBook.category_id) {
+      setError('Kategori harus dipilih');
+      return;
+    }
+    if (newBook.category_id === "other" && !newBook.newCategory.trim()) {
+      setError('Kategori baru harus diisi');
+      return;
+    }
 
     setOperationLoading(true);
     try {
+      let categoryId = newBook.category_id;
+      if (categoryId === "other" && newBook.newCategory) {
+        const res = await addCategory({ name: newBook.newCategory });
+        categoryId = res.data.id;
+        getCategories().then(res => setCategories(res.data));
+      }
+
       const formData = new FormData();
       formData.append('title', newBook.title.trim());
       formData.append('author', newBook.author.trim());
       formData.append('stock', Number(newBook.stock));
       formData.append('description', newBook.description || '');
+      formData.append('category_id', categoryId);
       if (newBook.file) {
         formData.append('file', newBook.file);
       }
@@ -147,7 +186,10 @@ const BookList = () => {
       title: book.title, 
       author: book.author, 
       stock: book.stock, 
-      file: null 
+      file: null,
+      category_id: book.category_id || '',
+      newCategory: '',
+      description: book.description || ''
     });
     setPreview(book.image ? `http://localhost:5000${book.image}` : null);
   };
@@ -170,7 +212,7 @@ const BookList = () => {
   };
 
   const resetForm = () => {
-    setNewBook({ title: '', author: '', stock: '', file: null });
+    setNewBook({ title: '', author: '', stock: '', file: null, category_id: '', newCategory: '', description: '' });
     setPreview(null);
     setEditingBook(null);
     setError('');
@@ -272,6 +314,34 @@ const BookList = () => {
 
             <div className="form-control">
               <label className="label">
+                <span className="label-text">Kategori</span>
+              </label>
+              <select
+                className="select select-bordered"
+                value={newBook.category_id || ''}
+                onChange={e => setNewBook({ ...newBook, category_id: e.target.value })}
+                required
+              >
+                <option value="">Pilih Kategori</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+                <option value="other">Other</option>
+              </select>
+              {newBook.category_id === "other" && (
+                <input
+                  type="text"
+                  className="input input-bordered mt-2"
+                  placeholder="Kategori baru"
+                  value={newBook.newCategory || ''}
+                  onChange={e => setNewBook({ ...newBook, newCategory: e.target.value })}
+                  required
+                />
+              )}
+            </div>
+
+            <div className="form-control">
+              <label className="label">
                 <span className="label-text">Sampul Buku</span>
               </label>
               <input
@@ -343,6 +413,7 @@ const BookList = () => {
               <h3 className="card-title">{book.title}</h3>
               <p><span className="font-semibold">Penulis:</span> {book.author}</p>
               <p><span className="font-semibold">Stok:</span> {book.stock}</p>
+              <p><span className="font-semibold">Kategori:</span> {book.category || '-'}</p>
               <div className="card-actions justify-end mt-2">
                 <Link to={`/books/${book.id}`} className="btn btn-info btn-sm">
                   Detail

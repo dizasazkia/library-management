@@ -50,13 +50,14 @@ const BorrowHistory = () => {
               <th>Judul Buku</th>
               <th>Tanggal Pinjam</th>
               <th>Status</th>
+              <th>Tanggal Pengembalian</th> {/* Tambahkan kolom ini */}
               <th>Aksi</th>
             </tr>
           </thead>
           <tbody>
             {borrows.length === 0 && (
               <tr>
-                <td colSpan={5} className="text-center">Tidak ada riwayat peminjaman</td>
+                <td colSpan={6} className="text-center">Tidak ada riwayat peminjaman</td>
               </tr>
             )}
             {borrows.map((borrow) => (
@@ -81,6 +82,16 @@ const BorrowHistory = () => {
                   ) : (
                     <span className="badge badge-info">Dipinjam</span>
                   )}
+                </td>
+                <td>
+                  {borrow.status === 'dikembalikan' && borrow.actual_return_date
+                    ? new Date(borrow.actual_return_date).toLocaleDateString('id-ID', {
+                        weekday: 'short',
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                      })
+                    : '-'}
                 </td>
                 <td>
                   {borrow.status === 'dikembalikan' ? (
