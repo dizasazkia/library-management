@@ -23,12 +23,12 @@ const Borrows = () => {
 
   return (
     <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">Daftar Peminjaman</h2>
+      <h2 className="text-2xl font-bold mb-4 text-black">Daftar Peminjaman</h2>
       {error && <div className="alert alert-error">{error}</div>}
       {loading && <div className="loading loading-spinner"></div>}
       <div className="overflow-x-auto">
         <table className="table w-full">
-          <thead>
+          <thead className="bg-gray-100 text-black">
             <tr>
               <th>ID</th>
               <th>Pengguna</th>
@@ -38,7 +38,7 @@ const Borrows = () => {
               <th>Tanggal Pengembalian</th> {/* Tambahkan kolom ini */}
             </tr>
           </thead>
-          <tbody>
+          <tbody className="text-black">
             {borrows.map((borrow) => (
               <tr key={borrow.id}>
                 <td>{borrow.id}</td>

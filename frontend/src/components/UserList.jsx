@@ -90,13 +90,13 @@ const UserList = () => {
 
   return (
     <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">Kelola Pengguna</h2>
+      <h2 className="text-2xl font-bold mb-4 text-black">Kelola Pengguna</h2>
       {error && <div className="alert alert-error mb-4">{error}</div>}
       {loading && <div className="loading loading-spinner"></div>}
       
       {/* Add User Form */}
-      <div className="mb-6 p-4 border rounded-lg">
-        <h3 className="text-lg font-semibold mb-3">Tambah Pengguna Baru</h3>
+      <div className="mb-6 p-4 border rounded-lg text-black">
+        <h3 className="text-lg font-semibold mb-3 text-black">Tambah Pengguna Baru</h3>
         <div className="flex flex-wrap items-end gap-3">
           <div className="form-control">
             <label className="label">
@@ -148,7 +148,7 @@ const UserList = () => {
       {/* Users Table */}
       <div className="overflow-x-auto">
         <table className="table w-full">
-          <thead>
+          <thead className="bg-gray-100 text-black"> 
             <tr>
               <th>ID</th>
               <th>Username</th>
@@ -156,7 +156,7 @@ const UserList = () => {
               <th>Aksi</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="text-black">
             {users.map((user) => (
               <tr key={user.id}>
                 <td>{user.id}</td>
@@ -174,7 +174,7 @@ const UserList = () => {
                     user.username
                   )}
                 </td>
-                <td>
+                <td className="text-black">
                   {editingUser?.id === user.id ? (
                     <select
                       className="select select-bordered select-sm"

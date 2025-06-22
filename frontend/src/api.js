@@ -23,6 +23,8 @@ export const login = (username, password) =>
 
 export const getBooks = () => api.get('/books/');
 
+export const getBookRating = (bookId) => api.get(`/books/${bookId}/rating`);
+
 export const getCategories = () => api.get('/books/categories');
 
 export const getBookById = (id) => api.get(`/books/${id}`);
@@ -35,6 +37,9 @@ export const addBook = (bookData) =>
       'Content-Type': 'multipart/form-data',
     },
   });
+
+export const rateBook = (bookId, rating) =>
+  api.post(`/books/${bookId}/rating`, { rating });
 
 export const addCategory = (data) => 
   api.post('/books/categories', data, {

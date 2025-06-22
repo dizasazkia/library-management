@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext, useRef } from 'react';
 import { getBooks, searchBooks, addBook, updateBook, deleteBook, borrowBook } from '../api';
-import { getCategories, addCategory } from '../api';
+import { getCategories, addCategory, getBookRating} from '../api';
 import { AuthContext } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 
@@ -15,6 +15,7 @@ const BookList = () => {
   const [loading, setLoading] = useState(false);
   const [operationLoading, setOperationLoading] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
+  const [bookRatings, setBookRatings] = useState({});
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -37,6 +38,18 @@ const BookList = () => {
     try {
       const res = search ? await searchBooks(search) : await getBooks();
       setBooks(res.data);
+      const ratings = {};
+      await Promise.all(
+        res.data.map(async (book) => {
+          try {
+            const ratingRes = await getBookRating(book.id);
+            ratings[book.id] = ratingRes.data.avg_rating;
+          } catch {
+            ratings[book.id] = null;
+          }
+        })
+      );
+      setBookRatings(ratings);
     } catch (err) {
       console.error('Fetch error:', err.response?.data || err.message);
       setError(err.response?.data?.error || 'Gagal mengambil data buku');
@@ -222,9 +235,24 @@ const BookList = () => {
   };
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">Daftar Buku</h2>
-      
+    <div className="min-h-screen bg-white px-8 py-8">
+      {/* Header dan Search */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-12">
+        <h2 className="text-2xl font-bold bg-blue-100 text-blue-700 px-6 py-2 rounded-full w-max mb-6 md:mb-0 shadow-none">
+          Daftar Buku
+        </h2>
+        <input
+          type="text"
+          placeholder="🔍 Cari buku..."
+          className="w-full md:w-80 bg-blue-100 text-gray-700 placeholder:text-gray-400 rounded-lg px-4 py-2 border-none outline-none focus:ring-2 focus:ring-blue-200 transition"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          aria-label="Cari buku berdasarkan judul"
+          style={{ boxShadow: 'none' }}
+        />
+      </div>
+
+      {/* Error & Loading */}
       {error && (
         <div role="alert" className="alert alert-error mb-4">
           <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
@@ -233,23 +261,11 @@ const BookList = () => {
           <span>{error}</span>
         </div>
       )}
-      
       {loading && (
         <div className="flex justify-center mb-4">
           <span className="loading loading-spinner loading-lg"></span>
         </div>
       )}
-
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
-        <input
-          type="text"
-          placeholder="Cari buku..."
-          className="input input-bordered w-full md:w-96"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          aria-label="Cari buku berdasarkan judul"
-        />
-      </div>
 
       {user.role === 'admin' && (
         <div className="mb-8 p-4 bg-base-200 rounded-lg">
@@ -389,75 +405,54 @@ const BookList = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-12 gap-y-16">
         {books.map((book) => (
-          <div key={book.id} className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
-            <figure className="px-4 pt-4">
+          <div
+            key={book.id}
+            className="flex bg-white rounded-2xl shadow p-6 items-center"
+            style={{ minHeight: 200 }}
+          >
+            {/* Gambar Buku */}
+            <div className="flex-shrink-0">
               {book.image ? (
                 <img
                   src={`http://localhost:5000${book.image}`}
-                  alt={`Sampul buku ${book.title}`}
-                  className="rounded-xl h-48 w-full object-cover"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = '/placeholder-book.jpg';
-                  }}
+                  alt={book.title}
+                  className="rounded-xl object-cover"
+                  style={{ width: 120, height: 150 }}
                 />
               ) : (
-                <div className="h-48 w-full bg-gray-200 rounded-xl flex items-center justify-center">
-                  <span className="text-gray-500">Tidak ada gambar</span>
+                <div className="bg-gray-200 rounded-xl flex items-center justify-center" style={{ width: 120, height: 150 }}>
+                  <svg width="80" height="80" fill="none" viewBox="0 0 24 24">
+                    <rect width="80" height="80" rx="8" fill="#d1d5db" />
+                    <rect x="16" y="24" width="48" height="8" rx="2" fill="#fff" />
+                    <rect x="16" y="40" width="48" height="8" rx="2" fill="#fff" />
+                  </svg>
                 </div>
               )}
-            </figure>
-            <div className="card-body">
-              <h3 className="card-title">{book.title}</h3>
-              <p><span className="font-semibold">Penulis:</span> {book.author}</p>
-              <p><span className="font-semibold">Stok:</span> {book.stock}</p>
-              <p><span className="font-semibold">Kategori:</span> {book.category || '-'}</p>
-              <div className="card-actions justify-end mt-2">
-                <Link to={`/books/${book.id}`} className="btn btn-info btn-sm">
-                  Detail
-                </Link>
-                {user.role === 'mahasiswa' && book.stock > 0 && (
-                  <button
-                    className="btn btn-primary btn-sm"
-                    onClick={() => handleBorrow(book.id)}
-                    disabled={operationLoading}
-                  >
-                    {operationLoading ? (
-                      <span className="loading loading-spinner loading-xs"></span>
-                    ) : (
-                      'Pinjam'
-                    )}
-                  </button>
-                )}
-                {user.role === 'admin' && (
-                  <div className="flex gap-2">
-                    <button
-                      className="btn btn-warning btn-sm"
-                      onClick={() => handleEditClick(book)}
-                      disabled={operationLoading}
-                    >
-                      {operationLoading ? (
-                        <span className="loading loading-spinner loading-xs"></span>
-                      ) : (
-                        'Edit'
-                      )}
-                    </button>
-                    <button
-                      className="btn btn-error btn-sm"
-                      onClick={() => handleDeleteBook(book.id)}
-                      disabled={operationLoading}
-                    >
-                      {operationLoading ? (
-                        <span className="loading loading-spinner loading-xs"></span>
-                      ) : (
-                        'Hapus'
-                      )}
-                    </button>
-                  </div>
-                )}
+            </div>
+            {/* Info Buku */}
+            <div className="ml-6 flex-1">
+              <div className="text-xl font-bold text-black mb-1">{book.title}</div>
+              <div className="text-base text-black mb-1">{book.author || 'Writer'}</div>
+              <div className="text-base text-black mb-1">{book.category || 'Category'}</div>
+              <div className="text-base text-black mb-1">Stok</div>
+              <div className="flex items-center mb-3">
+                {bookRatings[book.id]
+                  ? <span className="text-yellow-400 text-xl">
+                      {'★'.repeat(Math.round(bookRatings[book.id]))}
+                      {'☆'.repeat(5 - Math.round(bookRatings[book.id]))}
+                    </span>
+                  : <span className="text-black text-xl">★★★★★</span>
+                }
               </div>
+              <Link
+                to={`/books/${book.id}`}
+                className="inline-block px-8 py-2 bg-blue-200 text-blue-700 rounded-lg text-lg font-semibold hover:bg-blue-300 transition text-center"
+                style={{ minWidth: 100 }}
+              >
+                More
+              </Link>
             </div>
           </div>
         ))}

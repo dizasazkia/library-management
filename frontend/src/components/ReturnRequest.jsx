@@ -51,7 +51,7 @@ const ReturnRequest = () => {
       {loading && <div className="loading loading-spinner"></div>}
       <div className="overflow-x-auto">
         <table className="table w-full">
-          <thead>
+          <thead className="bg-gray-100 text-black">
             <tr>
               <th>ID</th>
               <th>Pengguna</th>
@@ -62,7 +62,7 @@ const ReturnRequest = () => {
               <th>Aksi</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="text-black">
             {borrows.length === 0 && (
               <tr>
                 <td colSpan={7} className="text-center">Tidak ada permintaan pengembalian</td>
