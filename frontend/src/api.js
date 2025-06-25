@@ -21,7 +21,10 @@ export const login = (username, password) =>
     headers: { 'Content-Type': 'application/json' },
   });
 
-export const getBooks = () => api.get('/books/');
+export const getBooks = (categoryId) =>
+  api.get('/books/', {
+    params: { category_id: categoryId || '' },
+  });
 
 export const getBookRating = (bookId) => api.get(`/books/${bookId}/rating`);
 
@@ -29,7 +32,10 @@ export const getCategories = () => api.get('/books/categories');
 
 export const getBookById = (id) => api.get(`/books/${id}`);
 
-export const searchBooks = (title) => api.get(`/books/search?title=${title}`);
+export const searchBooks = (title, categoryId) =>
+  api.get('/books/search', {
+    params: { title, category_id: categoryId || '' },
+  });
 
 export const addBook = (bookData) =>
   api.post('/books/', bookData, {
@@ -43,8 +49,8 @@ export const rateBook = (bookId, rating) =>
 
 export const addCategory = (data) => 
   api.post('/books/categories', data, {
-  headers: { 'Content-Type': 'application/json' },
-});
+    headers: { 'Content-Type': 'application/json' },
+  });
 
 export const updateBook = (id, bookData) =>
   api.put(`/books/${id}`, bookData, {
@@ -61,11 +67,11 @@ export const addUser = (user) => api.post('/users/', user, {
 
 export const getUsers = () => api.get('/users/');
 
-export const updateUser = (id, user) => api.put(`/users/${id}`, user, { // Remove trailing slash
+export const updateUser = (id, user) => api.put(`/users/${id}`, user, {
   headers: { 'Content-Type': 'application/json' },
 });
 
-export const deleteUser = (id) => api.delete(`/users/${id}`); // Remove trailing slash
+export const deleteUser = (id) => api.delete(`/users/${id}`);
 
 export const borrowBook = (bookId) => api.post('/borrows/', { book_id: bookId }, {
   headers: { 'Content-Type': 'application/json' },

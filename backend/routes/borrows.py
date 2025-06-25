@@ -82,9 +82,9 @@ def borrow_book():
         borrow_id = cursor.lastrowid
 
         # Insert to returns table with pending status, return_date NULL
-        cursor.execute('''
-            INSERT INTO returns (borrow_id, status) VALUES (%s, 'pending')
-        ''', (borrow_id,))
+        # cursor.execute('''
+        #     INSERT INTO returns (borrow_id, status) VALUES (%s, 'pending')
+        # ''', (borrow_id,))
 
         cursor.execute('UPDATE books SET stock = stock - 1 WHERE id = %s', (book_id,))
         conn.commit()

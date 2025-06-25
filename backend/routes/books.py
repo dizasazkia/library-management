@@ -1,13 +1,13 @@
 from flask import Blueprint, request, jsonify, send_from_directory
 from config.db import get_db_connection
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from routes import admin_required
 import os
 from werkzeug.utils import secure_filename
 
 books_bp = Blueprint('books', __name__)
 
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = 'Uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 def allowed_file(filename):
@@ -52,14 +52,19 @@ def add_category():
 @books_bp.route('/', methods=['GET'])
 @jwt_required()
 def get_books():
+    category_id = request.args.get('category_id', '')
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    # JOIN ke tabel kategori untuk ambil nama kategori
-    cursor.execute('''
+    query = '''
         SELECT b.id, b.title, b.author, b.stock, b.image, b.description, b.category_id, c.name AS category
         FROM books b
         LEFT JOIN categories c ON b.category_id = c.id
-    ''')
+    '''
+    params = []
+    if category_id:
+        query += ' WHERE b.category_id = %s'
+        params.append(category_id)
+    cursor.execute(query, params)
     books = cursor.fetchall()
     cursor.close()
     conn.close()
@@ -69,14 +74,20 @@ def get_books():
 @jwt_required()
 def search_books():
     title = request.args.get('title', '')
+    category_id = request.args.get('category_id', '')
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute('''
+    query = '''
         SELECT b.id, b.title, b.author, b.stock, b.image, b.description, b.category_id, c.name AS category
         FROM books b
         LEFT JOIN categories c ON b.category_id = c.id
         WHERE b.title LIKE %s
-    ''', (f'%{title}%',))
+    '''
+    params = [f'%{title}%']
+    if category_id:
+        query += ' AND b.category_id = %s'
+        params.append(category_id)
+    cursor.execute(query, params)
     books = cursor.fetchall()
     cursor.close()
     conn.close()
@@ -123,7 +134,7 @@ def add_book():
             filename = secure_filename(file.filename)
             file_path = os.path.join(UPLOAD_FOLDER, filename)
             file.save(file_path)
-            image_url = f'/uploads/{filename}'
+            image_url = f'/Uploads/{filename}'
         else:
             return jsonify({'error': 'Invalid or no file provided'}), 400
 
@@ -166,7 +177,7 @@ def update_book(id):
             filename = secure_filename(file.filename)
             file_path = os.path.join(UPLOAD_FOLDER, filename)
             file.save(file_path)
-            image_url = f'/uploads/{filename}'
+            image_url = f'/Uploads/{filename}'
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -211,6 +222,58 @@ def delete_book(id):
         conn.close()
     return jsonify({'message': 'Book deleted'}), 200
 
-@books_bp.route('/uploads/<filename>')
+@books_bp.route('/Uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
+
+@books_bp.route('/<int:book_id>/rating', methods=['POST'])
+@jwt_required()
+def rate_book(book_id):
+    user = get_jwt_identity()
+    if isinstance(user, str):
+        import json
+        user = json.loads(user)
+    user_id = user['id']
+    data = request.get_json()
+    rating = data.get('rating')
+    if not rating or not (1 <= int(rating) <= 5):
+        return jsonify({'error': 'Rating harus 1-5'}), 400
+
+    print('user_id:', user_id, type(user_id), 'book_id:', book_id, type(book_id))
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    # Cek apakah user sudah mengembalikan buku ini
+    cursor.execute('''
+        SELECT b.id FROM borrows b
+        JOIN returns r ON r.borrow_id = b.id
+        WHERE b.user_id = %s AND b.book_id = %s 
+        AND b.status = 'dikembalikan' 
+        AND r.status = 'confirmed'
+    ''', (user_id, book_id))
+    row = cursor.fetchone()
+    if not row:
+        cursor.close()
+        conn.close()
+        return jsonify({'error': 'Anda hanya bisa memberi rating setelah mengembalikan buku ini'}), 403
+
+    # Insert/update rating
+    cursor.execute('''
+        INSERT INTO ratings (user_id, book_id, rating)
+        VALUES (%s, %s, %s)
+        ON DUPLICATE KEY UPDATE rating = VALUES(rating)
+    ''', (user_id, book_id, rating))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    return jsonify({'message': 'Rating berhasil disimpan'}), 200
+
+@books_bp.route('/<int:book_id>/rating', methods=['GET'])
+def get_book_rating(book_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute('SELECT AVG(rating) as avg_rating, COUNT(*) as total FROM ratings WHERE book_id = %s', (book_id,))
+    result = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    return jsonify(result), 200

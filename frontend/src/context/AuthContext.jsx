@@ -16,8 +16,17 @@ export const AuthProvider = ({ children }) => {
       try {
         const decoded = jwtDecode(token);
         const userData = typeof decoded.sub === "string" ? JSON.parse(decoded.sub) : decoded.sub;
-        setUser({ id: userData.id, role: userData.role });
-        localStorage.setItem('user', JSON.stringify({ id: userData.id, role: userData.role }));
+
+        setUser({
+          id: userData.id,
+          username: userData.username,
+          role: userData.role,
+        });
+        localStorage.setItem('user', JSON.stringify({
+          id: userData.id,
+          username: userData.username,
+          role: userData.role,
+        }));
       } catch (error) {
         console.error('Token decoding error:', error);
         logout();
@@ -33,8 +42,17 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('token', token);
     const decoded = jwtDecode(token);
     const userData = typeof decoded.sub === "string" ? JSON.parse(decoded.sub) : decoded.sub;
-    setUser({ id: userData.id, role: userData.role });
-    localStorage.setItem('user', JSON.stringify({ id: userData.id, role: userData.role }));
+
+    setUser({
+      id: userData.id,
+      username: userData.username,
+      role: userData.role,
+    });
+    localStorage.setItem('user', JSON.stringify({
+      id: userData.id,
+      username: userData.username,
+      role: userData.role,
+    }));
   };
 
   const logout = () => {

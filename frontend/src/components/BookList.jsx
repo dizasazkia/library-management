@@ -1,14 +1,16 @@
 import { useState, useEffect, useContext, useRef } from 'react';
 import { getBooks, searchBooks, addBook, updateBook, deleteBook, borrowBook } from '../api';
-import { getCategories, addCategory, getBookRating} from '../api';
+import { getCategories, addCategory, getBookRating } from '../api';
 import { AuthContext } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
+import { FaEdit, FaTrash, FaSearch, FaChevronDown } from 'react-icons/fa';
 
 const BookList = () => {
   const { user } = useContext(AuthContext);
   const [books, setBooks] = useState([]);
   const [categories, setCategories] = useState([]);
   const [search, setSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [newBook, setNewBook] = useState({ title: '', author: '', stock: '', file: null, category_id: '', newCategory: '', description: '' });
   const [preview, setPreview] = useState(null);
   const [error, setError] = useState('');
@@ -20,7 +22,7 @@ const BookList = () => {
 
   useEffect(() => {
     fetchBooks();
-  }, [search]);
+  }, [search, selectedCategory]); // Add selectedCategory as dependency
 
   useEffect(() => {
     if (error) {
@@ -36,7 +38,9 @@ const BookList = () => {
   const fetchBooks = async () => {
     setLoading(true);
     try {
-      const res = search ? await searchBooks(search) : await getBooks();
+      const res = search 
+        ? await searchBooks(search, selectedCategory) // Pass selectedCategory to searchBooks
+        : await getBooks(selectedCategory); // Pass selectedCategory to getBooks
       setBooks(res.data);
       const ratings = {};
       await Promise.all(
@@ -82,7 +86,6 @@ const BookList = () => {
       if (categoryId === "other" && newBook.newCategory) {
         const res = await addCategory({ name: newBook.newCategory });
         categoryId = res.data.id;
-        // Refresh kategori agar langsung muncul di dropdown
         getCategories().then(res => setCategories(res.data));
       }
 
@@ -235,21 +238,45 @@ const BookList = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white px-8 py-8">
+    <div className="min-h-screen bg-white px-12 py-12">
       {/* Header dan Search */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-12">
-        <h2 className="text-2xl font-bold bg-blue-100 text-blue-700 px-6 py-2 rounded-full w-max mb-6 md:mb-0 shadow-none">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-12 mt-4">
+        {/* Daftar Buku */}
+        <h2 className="text-lg font-bold text-left px-4 py-2 mt-4 bg-[#CCDDFB] text-white  shadow-md rounded-full inline-block max-w-fit mb-2">
           Daftar Buku
         </h2>
-        <input
-          type="text"
-          placeholder="🔍 Cari buku..."
-          className="w-full md:w-80 bg-blue-100 text-gray-700 placeholder:text-gray-400 rounded-lg px-4 py-2 border-none outline-none focus:ring-2 focus:ring-blue-200 transition"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          aria-label="Cari buku berdasarkan judul"
-          style={{ boxShadow: 'none' }}
-        />
+
+        {/* Kategori dan Search */}
+        <div className="flex items-center gap-3 flex-wrap justify-end">
+          {/* Kategori Dropdown */}
+          <div className="relative">
+            <select
+              className="bg-blue-200 text-white font-semibold rounded-lg px-4 py-2 pr-7 shadow outline-none appearance-none cursor-pointer"
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+            >
+              <option value="">Categories</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+            <FaChevronDown className="absolute right-3 top-3 text-white text-sm pointer-events-none" />
+          </div>
+
+          {/* Search input */}
+          <div className="relative w-full md:w-64">
+            <FaSearch className="absolute left-3 top-3 text-gray-500" />
+            <input
+              type="text"
+              placeholder="Cari buku..."
+              className="pl-10 pr-4 py-2 rounded-lg bg-blue-100 text-gray-700 w-full outline-none focus:ring-2 focus:ring-blue-300 transition"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Error & Loading */}
@@ -263,7 +290,7 @@ const BookList = () => {
       )}
       {loading && (
         <div className="flex justify-center mb-4">
-          <span className="loading loading-spinner loading-lg"></span>
+          <span className="loading loading-spinner text-black loading-lg"></span>
         </div>
       )}
 
@@ -376,7 +403,7 @@ const BookList = () => {
               <img
                 src={preview}
                 alt="Pratinjau sampul buku"
-                className="w-32 h-32 object-contain border rounded"
+                className="w-32 h-48 object-contain border rounded"
               />
             </div>
           )}
@@ -405,54 +432,81 @@ const BookList = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-12 gap-y-16">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {books.map((book) => (
-          <div
-            key={book.id}
-            className="flex bg-white rounded-2xl shadow p-6 items-center"
-            style={{ minHeight: 200 }}
-          >
-            {/* Gambar Buku */}
-            <div className="flex-shrink-0">
-              {book.image ? (
-                <img
-                  src={`http://localhost:5000${book.image}`}
-                  alt={book.title}
-                  className="rounded-xl object-cover"
-                  style={{ width: 120, height: 150 }}
-                />
-              ) : (
-                <div className="bg-gray-200 rounded-xl flex items-center justify-center" style={{ width: 120, height: 150 }}>
-                  <svg width="80" height="80" fill="none" viewBox="0 0 24 24">
-                    <rect width="80" height="80" rx="8" fill="#d1d5db" />
-                    <rect x="16" y="24" width="48" height="8" rx="2" fill="#fff" />
-                    <rect x="16" y="40" width="48" height="8" rx="2" fill="#fff" />
-                  </svg>
-                </div>
-              )}
-            </div>
-            {/* Info Buku */}
-            <div className="ml-6 flex-1">
-              <div className="text-xl font-bold text-black mb-1">{book.title}</div>
-              <div className="text-base text-black mb-1">{book.author || 'Writer'}</div>
-              <div className="text-base text-black mb-1">{book.category || 'Category'}</div>
-              <div className="text-base text-black mb-1">Stok</div>
-              <div className="flex items-center mb-3">
-                {bookRatings[book.id]
-                  ? <span className="text-yellow-400 text-xl">
-                      {'★'.repeat(Math.round(bookRatings[book.id]))}
-                      {'☆'.repeat(5 - Math.round(bookRatings[book.id]))}
-                    </span>
-                  : <span className="text-black text-xl">★★★★★</span>
-                }
-              </div>
-              <Link
-                to={`/books/${book.id}`}
-                className="inline-block px-8 py-2 bg-blue-200 text-blue-700 rounded-lg text-lg font-semibold hover:bg-blue-300 transition text-center"
-                style={{ minWidth: 100 }}
+          <div key={book.id} className="flex items-center text-left w-full">
+            <div className="flex-shrink-0 mr-6">
+              <div
+                className="bg-gray-300 rounded-lg flex items-center justify-center"
+                style={{ width: 140, height: 210 }}
               >
-                More
-              </Link>
+                {book.image ? (
+                  <img
+                    src={`http://localhost:5000${book.image}`}
+                    alt={book.title}
+                    className="rounded-lg object-cover shadow-lg"
+                    style={{ width: 140, height: 210 }}
+                  />
+                ) : (
+                  <svg width="90" height="135" fill="none" viewBox="0 0 24 24">
+                    <rect width="90" height="135" rx="10" fill="#d1d5db" />
+                    <rect x="20" y="40" width="50" height="12" rx="3" fill="#fff" />
+                    <rect x="20" y="70" width="50" height="12" rx="3" fill="#fff" />
+                  </svg>
+                )}
+              </div>
+            </div>
+
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold mb-1 text-black">{book.title}</h3>
+              <p className="text-sm text-gray-600 mb-1">{book.category || 'Category'}</p>
+              <p className="text-sm text-gray-600 mb-1">Stok: {book.stock}</p>
+
+              <div className="flex items-center mb-2">
+                {Array(5)
+                  .fill()
+                  .map((_, i) => (
+                    <span
+                      key={i}
+                      className={
+                        bookRatings[book.id] && i < Math.round(bookRatings[book.id])
+                          ? 'text-yellow-400'
+                          : 'text-gray-300'
+                      }
+                    >
+                      ★
+                    </span>
+                  ))}
+              </div>
+
+              {/* Tombol Aksi */}
+              <div className="mt-2 space-y-2">
+                {user.role === 'admin' && (
+                  <div className="flex gap-2 mb-3">
+                    <button
+                      className="text-yellow-400 hover:text-yellow-500 transition"
+                      onClick={() => handleEditClick(book)}
+                      aria-label="Edit Buku"
+                    >
+                      <FaEdit size={18} />
+                    </button>
+
+                    <button
+                      className="text-red-500 hover:text-red-700 transition"
+                      onClick={() => handleDeleteBook(book.id)}
+                      aria-label="Hapus Buku"
+                    >
+                      <FaTrash size={18} />
+                    </button>
+                  </div>
+                )}
+                <Link
+                  to={`/books/${book.id}`}
+                  className="inline-block px-4 py-1 bg-blue-200 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-300 transition"
+                >
+                  More
+                </Link>
+              </div>
             </div>
           </div>
         ))}

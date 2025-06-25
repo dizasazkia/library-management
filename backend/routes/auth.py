@@ -25,7 +25,7 @@ def login():
     import json
     print("IDENTITY:", type(json.dumps({'id': user['id'], 'role': user['role']})))
     access_token = create_access_token(
-        identity=json.dumps({'id': user['id'], 'role': user['role']}),
+        identity=json.dumps({'id': user['id'], 'username': user['username'], 'role': user['role']}),
         expires_delta=timedelta(hours=1)
     )
     return jsonify({'token': access_token, 'role': user['role']}), 200

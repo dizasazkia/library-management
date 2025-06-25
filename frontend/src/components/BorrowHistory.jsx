@@ -50,34 +50,40 @@ const BorrowHistory = () => {
     setRatingLoading((prev) => ({ ...prev, [bookId]: false }));
   };
 
-  return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold text-black mb-4">Riwayat Peminjaman</h2>
+    return (
+    <div className="p-4 px-12 py-12">
+      <h2 className="text-lg font-bold text-left px-4 py-2 bg-[#CCDDFB] text-white shadow-md rounded-full inline-block max-w-fit ml-0 mb-10 mt-8">
+        Riwayat Peminjaman
+      </h2>
+
       {error && <div className="alert alert-error">{error}</div>}
       {loading && <div className="loading loading-spinner"></div>}
+
       <div className="overflow-x-auto">
         <table className="table w-full">
-          <thead className="bg-gray-100 text-black">
+          <thead className="bg-gray-200 text-black">
             <tr>
-              <th>ID</th>
-              <th>Judul Buku</th>
-              <th>Tanggal Pinjam</th>
-              <th>Status</th>
-              <th>Tanggal Pengembalian</th> 
-              <th>Aksi</th>
+              <th className="text-left w-1/6 pl-20">Judul Buku</th>
+              <th className="text-center w-1/6">Tanggal Pinjam</th>
+              <th className="text-center w-1/6">Status</th>
+              <th className="text-center w-1/6">Tanggal Pengembalian</th>
+              <th className="text-right w-1/6 pr-24">Aksi</th>
             </tr>
           </thead>
           <tbody className="text-black">
             {borrows.length === 0 && (
               <tr>
-                <td colSpan={6} className="text-center">Tidak ada riwayat peminjaman</td>
+                <td colSpan={5} className="text-center py-4">
+                  Tidak ada riwayat peminjaman
+                </td>
               </tr>
             )}
+
             {borrows.map((borrow) => (
               <tr key={`${borrow.id}-${borrow.return_status}`}>
-                <td>{borrow.id}</td>
-                <td>{borrow.title}</td>
-                <td>
+                <td className="text-left pl-12">{borrow.title}</td>
+
+                <td className="text-center">
                   {borrow.borrow_date
                     ? new Date(borrow.borrow_date).toLocaleDateString('id-ID', {
                         weekday: 'short',
@@ -87,7 +93,8 @@ const BorrowHistory = () => {
                       })
                     : '-'}
                 </td>
-                <td>
+
+                <td className="text-center">
                   {borrow.status === 'dikembalikan' ? (
                     <span className="badge badge-success">Dikembalikan</span>
                   ) : borrow.return_status === 'pending' ? (
@@ -96,7 +103,8 @@ const BorrowHistory = () => {
                     <span className="badge badge-info">Dipinjam</span>
                   )}
                 </td>
-                <td>
+
+                <td className="text-center">
                   {borrow.status === 'dikembalikan' && borrow.actual_return_date
                     ? new Date(borrow.actual_return_date).toLocaleDateString('id-ID', {
                         weekday: 'short',
@@ -106,7 +114,8 @@ const BorrowHistory = () => {
                       })
                     : '-'}
                 </td>
-                <td>
+
+                <td className="text-right pr-12">
                   {borrow.status === 'dikembalikan' ? (
                     borrow.user_rating ? (
                       <span>
@@ -116,32 +125,42 @@ const BorrowHistory = () => {
                       </span>
                     ) : (
                       <div>
-                        <span>Beri rating: </span>
-                        {[1,2,3,4,5].map(val => (
+                        <span className="mr-1">Beri rating: </span>
+                        {[1, 2, 3, 4, 5].map((val) => (
                           <button
                             key={val}
                             type="button"
-                            className={`text-xl ${val <= (ratingInput[borrow.book_id] || 0) ? 'text-yellow-400' : 'text-gray-400'}`}
+                            className={`text-xl ${
+                              val <= (ratingInput[borrow.book_id] || 0)
+                                ? 'text-yellow-400'
+                                : 'text-gray-400'
+                            }`}
                             disabled={ratingLoading[borrow.book_id]}
                             onClick={() => {
-                              setRatingInput((prev) => ({ ...prev, [borrow.book_id]: val }));
+                              setRatingInput((prev) => ({
+                                ...prev,
+                                [borrow.book_id]: val
+                              }));
                               handleRateBook(borrow.book_id, val);
                             }}
-                          >★</button>
+                          >
+                            ★
+                          </button>
                         ))}
                       </div>
                     )
                   ) : borrow.return_status === 'pending' ? (
                     <span className="text-yellow-600">Menunggu konfirmasi admin</span>
                   ) : (
-                    user?.role === 'mahasiswa' &&
-                    <button
-                      className="btn btn-primary btn-xs"
-                      onClick={() => handleRequestReturn(borrow.id)}
-                      disabled={processing === borrow.id}
-                    >
-                      {processing === borrow.id ? 'Memproses...' : 'Ajukan Pengembalian'}
-                    </button>
+                    user?.role === 'mahasiswa' && (
+                      <button
+                        className="btn btn-primary btn-xs"
+                        onClick={() => handleRequestReturn(borrow.id)}
+                        disabled={processing === borrow.id}
+                      >
+                        {processing === borrow.id ? 'Memproses...' : 'Ajukan Pengembalian'}
+                      </button>
+                    )
                   )}
                 </td>
               </tr>
