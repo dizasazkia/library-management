@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getUsers, addUser, updateUser, deleteUser } from '../api';
+import { FaSearch } from 'react-icons/fa';
 
 const UserList = () => {
   const [users, setUsers] = useState([]);
@@ -7,6 +8,8 @@ const UserList = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     fetchUsers();
@@ -39,6 +42,7 @@ const UserList = () => {
     try {
       await addUser(newUser);
       setNewUser({ username: '', password: '', role: 'mahasiswa' });
+      setShowAddForm(false);
       fetchUsers();
       setError('');
     } catch (err) {
@@ -47,7 +51,8 @@ const UserList = () => {
   };
 
   const handleEditClick = (user) => {
-    setEditingUser({ ...user, password: '' }); // Initialize with empty password
+    setEditingUser({ ...user, password: '' });
+    setShowAddForm(false);
   };
 
   const handleUpdateUser = async () => {
@@ -57,7 +62,6 @@ const UserList = () => {
     }
 
     try {
-      // Only include password if it's provided
       const updateData = {
         username: editingUser.username,
         role: editingUser.role,
@@ -89,146 +93,177 @@ const UserList = () => {
   };
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4 text-black">Kelola Pengguna</h2>
-      {error && <div className="alert alert-error mb-4">{error}</div>}
-      {loading && <div className="loading loading-spinner"></div>}
-      
-      {/* Add User Form */}
-      <div className="mb-6 p-4 border rounded-lg text-black">
-        <h3 className="text-lg font-semibold mb-3 text-black">Tambah Pengguna Baru</h3>
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Username</span>
-            </label>
-            <input
-              type="text"
-              placeholder="Username"
-              className="input input-bordered"
-              value={newUser.username}
-              onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-            />
-          </div>
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Password</span>
-            </label>
-            <input
-              type="password"
-              placeholder="Password"
-              className="input input-bordered"
-              value={newUser.password}
-              onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-            />
-          </div>
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Role</span>
-            </label>
-            <select
-              className="select select-bordered"
-              value={newUser.role}
-              onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-            >
-              <option value="mahasiswa">Mahasiswa</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-          <button 
-            className="btn btn-primary"
-            onClick={handleAddUser}
-            disabled={loading}
-          >
-            Tambah Pengguna
-          </button>
+    <div className="p-4 mt-10 px-12 py-12">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-lg font-bold text-left px-4 py-2 bg-[#CCDDFB] text-white shadow-md rounded-full inline-block max-w-fit">
+          User List
+        </h2>
+
+        {/* Search Bar */}
+        <div className="relative w-full md:w-64">
+          <FaSearch className="absolute left-3 top-3 text-gray-500" />
+          <input
+            type="text"
+            placeholder="Cari username..."
+            className="pl-10 pr-4 py-2 rounded-lg bg-blue-100 text-gray-700 w-full outline-none focus:ring-2 focus:ring-blue-300 transition"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
       </div>
 
+      {error && <div className="alert alert-error mb-4">{error}</div>}
+      {loading && <div className="loading loading-spinner"></div>}
+
+      {/* Tombol tampilkan form tambah */}
+      {!editingUser && !showAddForm && (
+        <div className="flex justify-end mb-4">
+          <button className="btn btn-primary" onClick={() => setShowAddForm(true)}>
+            Add New User
+          </button>
+        </div>
+      )}
+
+      {/* Form Tambah User */}
+      {showAddForm && !editingUser && (
+        <div className="relative mb-6 mt-12 p-6 border rounded-lg bg-white shadow text-black">
+          <button
+            className="absolute top-2 right-3 text-gray-500 hover:text-red-500 text-xl font-bold"
+            onClick={() => {
+              setShowAddForm(false);
+              setNewUser({ username: '', password: '', role: 'mahasiswa' });
+              setError('');
+            }}
+            title="Tutup Form"
+          >
+            ×
+          </button>
+          <h3 className="text-lg font-semibold text-black">Add New User</h3>
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Username</span>
+              </label>
+              <input
+                type="text"
+                placeholder="Username"
+                className="input input-bordered bg-blue-100 text-gray-700"
+                value={newUser.username}
+                onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+              />
+            </div>
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Password</span>
+              </label>
+              <input
+                type="password"
+                placeholder="Password"
+                className="input input-bordered bg-blue-100 text-gray-700"
+                value={newUser.password}
+                onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+              />
+            </div>
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text">Role</span>
+              </label>
+              <select
+                className="select select-bordered bg-blue-100 text-gray-700"
+                value={newUser.role}
+                onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+              >
+                <option value="mahasiswa">Mahasiswa</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <button className="btn btn-primary" onClick={handleAddUser} disabled={loading}>
+              Add User
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Users Table */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto mt-10">
         <table className="table w-full">
-          <thead className="bg-gray-100 text-black"> 
+          <thead className="bg-gray-100 text-black">
             <tr>
               <th>ID</th>
               <th>Username</th>
               <th>Role</th>
-              <th>Aksi</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody className="text-black">
-            {users.map((user) => (
-              <tr key={user.id}>
-                <td>{user.id}</td>
-                <td>
-                  {editingUser?.id === user.id ? (
-                    <input
-                      type="text"
-                      className="input input-bordered input-sm"
-                      value={editingUser.username}
-                      onChange={(e) =>
-                        setEditingUser({ ...editingUser, username: e.target.value })
-                      }
-                    />
-                  ) : (
-                    user.username
-                  )}
-                </td>
-                <td className="text-black">
-                  {editingUser?.id === user.id ? (
-                    <select
-                      className="select select-bordered select-sm"
-                      value={editingUser.role}
-                      onChange={(e) =>
-                        setEditingUser({ ...editingUser, role: e.target.value })
-                      }
-                    >
-                      <option value="mahasiswa">Mahasiswa</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                  ) : (
-                    user.role
-                  )}
-                </td>
-                <td>
-                  {editingUser?.id === user.id ? (
-                    <div className="flex gap-2">
-                      <button 
-                        className="btn btn-success btn-sm"
-                        onClick={handleUpdateUser}
-                        disabled={loading}
+            {users
+              .filter(user =>
+                user.username.toLowerCase().includes(search.toLowerCase())
+              )
+              .map((user) => (
+                <tr key={user.id} className="min-h-[64px] align-middle">
+                  <td className="px-3 py-2">{user.id}</td>
+                  <td className="px-3 py-2">
+                    {editingUser?.id === user.id ? (
+                      <input
+                        type="text"
+                        className="input input-bordered bg-blue-100 text-gray-700 h-10 w-full"
+                        value={editingUser.username}
+                        onChange={(e) =>
+                          setEditingUser({ ...editingUser, username: e.target.value })
+                        }
+                      />
+                    ) : (
+                      user.username
+                    )}
+                  </td>
+                  <td className="px-3 py-2">
+                    {editingUser?.id === user.id ? (
+                      <select
+                        className="select select-bordered bg-blue-100 text-gray-700 h-10 w-full"
+                        value={editingUser.role}
+                        onChange={(e) =>
+                          setEditingUser({ ...editingUser, role: e.target.value })
+                        }
                       >
-                        Simpan
-                      </button>
-                      <button 
-                        className="btn btn-error btn-sm"
-                        onClick={handleCancelEdit}
-                        disabled={loading}
-                      >
-                        Batal
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex gap-2">
-                      <button
-                        className="btn btn-warning btn-sm"
-                        onClick={() => handleEditClick(user)}
-                        disabled={loading || editingUser !== null}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="btn btn-error btn-sm"
-                        onClick={() => handleDeleteUser(user.id)}
-                        disabled={loading || editingUser !== null}
-                      >
-                        Hapus
-                      </button>
-                    </div>
-                  )}
-                </td>
-              </tr>
-            ))}
+                        <option value="mahasiswa">Mahasiswa</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    ) : (
+                      user.role
+                    )}
+                  </td>
+                  <td className="px-3 py-2">
+                    {editingUser?.id === user.id ? (
+                      <div className="flex gap-2">
+                        <button className="btn btn-success btn-sm" onClick={handleUpdateUser} disabled={loading}>
+                          Save
+                        </button>
+                        <button className="btn btn-error btn-sm" onClick={handleCancelEdit} disabled={loading}>
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <button
+                          className="btn btn-warning btn-sm"
+                          onClick={() => handleEditClick(user)}
+                          disabled={loading || editingUser !== null}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="btn btn-error btn-sm"
+                          onClick={() => handleDeleteUser(user.id)}
+                          disabled={loading || editingUser !== null}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>

@@ -3,11 +3,12 @@ from config.db import get_db_connection
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from routes import admin_required
 import os
+from flask_cors import cross_origin
 from werkzeug.utils import secure_filename
 
 books_bp = Blueprint('books', __name__)
 
-UPLOAD_FOLDER = 'Uploads'
+UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 def allowed_file(filename):
@@ -134,7 +135,7 @@ def add_book():
             filename = secure_filename(file.filename)
             file_path = os.path.join(UPLOAD_FOLDER, filename)
             file.save(file_path)
-            image_url = f'/Uploads/{filename}'
+            image_url = f'/uploads/{filename}'
         else:
             return jsonify({'error': 'Invalid or no file provided'}), 400
 
@@ -177,7 +178,7 @@ def update_book(id):
             filename = secure_filename(file.filename)
             file_path = os.path.join(UPLOAD_FOLDER, filename)
             file.save(file_path)
-            image_url = f'/Uploads/{filename}'
+            image_url = f'/uploads/{filename}'
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -222,7 +223,8 @@ def delete_book(id):
         conn.close()
     return jsonify({'message': 'Book deleted'}), 200
 
-@books_bp.route('/Uploads/<filename>')
+@books_bp.route('/uploads/<filename>')
+@cross_origin()
 def uploaded_file(filename):
     return send_from_directory(UPLOAD_FOLDER, filename)
 

@@ -63,11 +63,11 @@ const BorrowHistory = () => {
         <table className="table w-full">
           <thead className="bg-gray-200 text-black">
             <tr>
-              <th className="text-left w-1/6 pl-20">Judul Buku</th>
-              <th className="text-center w-1/6">Tanggal Pinjam</th>
+              <th className="text-left w-1/6 pl-20">Book Title</th>
+              <th className="text-center w-1/6">Borrow Date</th>
               <th className="text-center w-1/6">Status</th>
-              <th className="text-center w-1/6">Tanggal Pengembalian</th>
-              <th className="text-right w-1/6 pr-24">Aksi</th>
+              <th className="text-center w-1/6">Return Date</th>
+              <th className="text-right w-1/6 pr-24">Actions</th>
             </tr>
           </thead>
           <tbody className="text-black">
@@ -96,11 +96,11 @@ const BorrowHistory = () => {
 
                 <td className="text-center">
                   {borrow.status === 'dikembalikan' ? (
-                    <span className="badge badge-success">Dikembalikan</span>
+                    <span className="badge badge-success">Returned</span>
                   ) : borrow.return_status === 'pending' ? (
-                    <span className="badge badge-warning">Menunggu Konfirmasi</span>
+                    <span className="badge badge-warning">Waiting for Confirmation</span>
                   ) : (
-                    <span className="badge badge-info">Dipinjam</span>
+                    <span className="badge badge-info">Borrowed</span>
                   )}
                 </td>
 
@@ -150,15 +150,15 @@ const BorrowHistory = () => {
                       </div>
                     )
                   ) : borrow.return_status === 'pending' ? (
-                    <span className="text-yellow-600">Menunggu konfirmasi admin</span>
+                    <span className="text-yellow-600">Waiting for confirmation</span>
                   ) : (
                     user?.role === 'mahasiswa' && (
                       <button
-                        className="btn btn-primary btn-xs"
+                        className="btn btn-primary btn-sm"
                         onClick={() => handleRequestReturn(borrow.id)}
                         disabled={processing === borrow.id}
                       >
-                        {processing === borrow.id ? 'Memproses...' : 'Ajukan Pengembalian'}
+                        {processing === borrow.id ? 'Memproses...' : 'return'}
                       </button>
                     )
                   )}

@@ -11,6 +11,7 @@ const BookList = () => {
   const [categories, setCategories] = useState([]);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [showForm, setShowForm] = useState(false);
   const [newBook, setNewBook] = useState({ title: '', author: '', stock: '', file: null, category_id: '', newCategory: '', description: '' });
   const [preview, setPreview] = useState(null);
   const [error, setError] = useState('');
@@ -231,6 +232,7 @@ const BookList = () => {
     setNewBook({ title: '', author: '', stock: '', file: null, category_id: '', newCategory: '', description: '' });
     setPreview(null);
     setEditingBook(null);
+    setShowForm(false); // <- tutup form saat batal
     setError('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -240,13 +242,13 @@ const BookList = () => {
   return (
     <div className="min-h-screen bg-white px-12 py-12">
       {/* Header dan Search */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-12 mt-4">
-        {/* Daftar Buku */}
-        <h2 className="text-lg font-bold text-left px-4 py-2 mt-4 bg-[#CCDDFB] text-white  shadow-md rounded-full inline-block max-w-fit mb-2">
-          Daftar Buku
+      <div className="flex flex-wrap justify-between items-center mb-10 mt-10">
+        {/* Judul Daftar Buku */}
+        <h2 className="text-lg font-bold px-4 py-2 bg-[#CCDDFB] text-white shadow-md rounded-full inline-block max-w-fit">
+          Book List
         </h2>
 
-        {/* Kategori dan Search */}
+        {/* Kategori Dropdown + Search */}
         <div className="flex items-center gap-3 flex-wrap justify-end">
           {/* Kategori Dropdown */}
           <div className="relative">
@@ -270,7 +272,7 @@ const BookList = () => {
             <FaSearch className="absolute left-3 top-3 text-gray-500" />
             <input
               type="text"
-              placeholder="Cari buku..."
+              placeholder="Search book by title..."
               className="pl-10 pr-4 py-2 rounded-lg bg-blue-100 text-gray-700 w-full outline-none focus:ring-2 focus:ring-blue-300 transition"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -278,6 +280,18 @@ const BookList = () => {
           </div>
         </div>
       </div>
+
+      {/* Tombol Tambah Buku Baru */}
+      {user.role === 'admin' && !showForm && !editingBook && (
+        <div className="flex justify-end mb-6">
+          <button
+            className="btn btn-primary"
+            onClick={() => setShowForm(true)}
+          >
+            Add New Book
+          </button>
+        </div>
+      )}
 
       {/* Error & Loading */}
       {error && (
@@ -294,48 +308,57 @@ const BookList = () => {
         </div>
       )}
 
-      {user.role === 'admin' && (
-        <div className="mb-8 p-4 bg-base-200 rounded-lg">
-          <h3 className="text-lg font-semibold mb-3">
-            {editingBook ? 'Edit Buku' : 'Tambah Buku Baru'}
+      {user.role === 'admin' && (showForm || editingBook) && (
+        <div className="relative mb-8 p-6 bg-white rounded-xl border border-gray-300 shadow-md">
+          {/* Tombol close */}
+          <button
+            className="absolute top-4 right-4 text-gray-500 hover:text-red-500 transition text-xl font-bold"
+            onClick={resetForm}
+            title="Tutup Form"
+          >
+            ×
+          </button>
+
+          <h3 className="text-lg font-semibold mb-3 text-blue-800">
+            {editingBook ? 'Edit Book' : 'Tambah Buku Baru'}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-            <div className="form-control">
+            <div className="form-control text-black">
               <label className="label">
-                <span className="label-text">Judul</span>
+                <span className="label-text">Title</span>
               </label>
               <input
                 type="text"
                 placeholder="Judul buku"
-                className="input input-bordered"
+                className="input input-bordered bg-blue-100 text-gray-700"
                 value={newBook.title}
                 onChange={(e) => setNewBook({ ...newBook, title: e.target.value })}
                 required
               />
             </div>
 
-            <div className="form-control">
+            <div className="form-control text-black">
               <label className="label">
-                <span className="label-text">Penulis</span>
+                <span className="label-text">Author</span>
               </label>
               <input
                 type="text"
                 placeholder="Penulis buku"
-                className="input input-bordered"
+                className="input input-bordered bg-blue-100 text-gray-700"
                 value={newBook.author}
                 onChange={(e) => setNewBook({ ...newBook, author: e.target.value })}
                 required
               />
             </div>
 
-            <div className="form-control">
+            <div className="form-control text-black">
               <label className="label">
-                <span className="label-text">Stok</span>
+                <span className="label-text">Stock</span>
               </label>
               <input
                 type="number"
                 placeholder="Jumlah stok"
-                className="input input-bordered"
+                className="input input-bordered bg-blue-100 text-gray-700"
                 value={newBook.stock}
                 onChange={(e) => setNewBook({ ...newBook, stock: e.target.value })}
                 min="0"
@@ -343,29 +366,29 @@ const BookList = () => {
               />
             </div>
 
-            <div className="form-control">
+            <div className="form-control text-black ">
               <label className="label">
-                <span className="label-text">Deskripsi</span>
+                <span className="label-text">Description</span>
               </label>
               <textarea
-                className="textarea textarea-bordered"
+                className="textarea textarea-bordered bg-blue-100 text-gray-700"
                 placeholder="Deskripsi buku"
                 value={newBook.description || ''}
                 onChange={(e) => setNewBook({ ...newBook, description: e.target.value })}
               />
             </div>
 
-            <div className="form-control">
+            <div className="form-control text-black">
               <label className="label">
-                <span className="label-text">Kategori</span>
+                <span className="label-text">Category</span>
               </label>
               <select
-                className="select select-bordered"
+                className="select select-bordered bg-blue-100 text-gray-700"
                 value={newBook.category_id || ''}
                 onChange={e => setNewBook({ ...newBook, category_id: e.target.value })}
                 required
               >
-                <option value="">Pilih Kategori</option>
+                <option value="">Select Category</option>
                 {categories.map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
@@ -374,7 +397,7 @@ const BookList = () => {
               {newBook.category_id === "other" && (
                 <input
                   type="text"
-                  className="input input-bordered mt-2"
+                  className="input input-bordered mt-2 bg-blue-100 text-gray-700"
                   placeholder="Kategori baru"
                   value={newBook.newCategory || ''}
                   onChange={e => setNewBook({ ...newBook, newCategory: e.target.value })}
@@ -383,15 +406,15 @@ const BookList = () => {
               )}
             </div>
 
-            <div className="form-control">
+            <div className="form-control text-black">
               <label className="label">
-                <span className="label-text">Sampul Buku</span>
+                <span className="label-text">Book Cover</span>
               </label>
               <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
-                className="file-input file-input-bordered w-full"
+                className="file-input file-input-bordered w-full bg-blue-100 text-gray-700"
                 onChange={handleFileChange}
               />
             </div>
@@ -399,7 +422,7 @@ const BookList = () => {
 
           {preview && (
             <div className="mt-4">
-              <p className="text-sm mb-2">Pratinjau:</p>
+              <p className="text-sm mb-2 text-black">Preview:</p>
               <img
                 src={preview}
                 alt="Pratinjau sampul buku"
@@ -424,8 +447,8 @@ const BookList = () => {
             </button>
             
             {editingBook && (
-              <button className="btn btn-ghost" onClick={resetForm}>
-                Batal
+              <button className="btn btn-ghost text-white bg-slate-400" onClick={resetForm}>
+                Cancel
               </button>
             )}
           </div>
@@ -434,7 +457,7 @@ const BookList = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {books.map((book) => (
-          <div key={book.id} className="flex items-center text-left w-full">
+          <div key={book.id} className="flex items-center text-left w-full mb-4 mt-6">
             <div className="flex-shrink-0 mr-6">
               <div
                 className="bg-gray-300 rounded-lg flex items-center justify-center"
@@ -460,7 +483,7 @@ const BookList = () => {
             <div className="flex-1">
               <h3 className="text-lg font-semibold mb-1 text-black">{book.title}</h3>
               <p className="text-sm text-gray-600 mb-1">{book.category || 'Category'}</p>
-              <p className="text-sm text-gray-600 mb-1">Stok: {book.stock}</p>
+              <p className="text-sm text-gray-600 mb-1">Stock: {book.stock}</p>
 
               <div className="flex items-center mb-2">
                 {Array(5)
@@ -486,7 +509,7 @@ const BookList = () => {
                     <button
                       className="text-yellow-400 hover:text-yellow-500 transition"
                       onClick={() => handleEditClick(book)}
-                      aria-label="Edit Buku"
+                      aria-label="Edit Book"
                     >
                       <FaEdit size={18} />
                     </button>
@@ -494,7 +517,7 @@ const BookList = () => {
                     <button
                       className="text-red-500 hover:text-red-700 transition"
                       onClick={() => handleDeleteBook(book.id)}
-                      aria-label="Hapus Buku"
+                      aria-label="Delete Book"
                     >
                       <FaTrash size={18} />
                     </button>

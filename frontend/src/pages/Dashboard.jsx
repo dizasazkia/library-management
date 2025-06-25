@@ -2,6 +2,7 @@ import { useContext, useEffect, useState } from 'react';
 import { getBooks, getBookRating } from '../api';
 import { AuthContext } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
+import { FaBookOpen, FaClipboardList, FaShieldAlt } from 'react-icons/fa';
 
 const Dashboard = () => {
   const { user } = useContext(AuthContext);
@@ -59,35 +60,72 @@ const Dashboard = () => {
   }, [user]);
 
   return (
-      <div className="hero min-h-screen bg-white">
-        <div className="hero-content text-center flex flex-col w-full max-w-none px-4 md:px-8 lg:px-12 xl:px-16">
-          <div className="w-full bg-[#b1c3e1] p-10 rounded-2xl mb-4 mt-14">
-            <div className="flex flex-col md:flex-row items-center justify-between w-full">
-              <div className="text-left mb-6 md:mb-0 md:w-2/3">
-                <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                  Welcome to the Library System
-                </h1>
-                    <p className="text-white text-base md:text-2xl">
-                      {user?.role === 'admin'
-                        ? 'Manage books, users, and transactions efficiently.'
-                        : 'Explore a books and manage your reading history with ease.'}
-                    </p>
-              </div>
-              <div className="md:w-1/3 flex justify-center">
-                <img
-                  src="/hero.png" 
-                  alt="Library Decoration"
-                  className="rounded-lg object-contain mr-6"
-                  style={{ width: '100%', maxWidth: 400, maxHeight: 300, height: 'auto' }}
-                />
-              </div>
+    <div className="hero min-h-screen bg-white">
+      <div className="hero-content text-center flex flex-col w-full max-w-none px-4 md:px-8 lg:px-12 xl:px-16">
+
+        {/* Hero Section */}
+        <div className="w-full bg-[#b1c3e1] p-10 rounded-2xl mb-4 mt-14">
+          <div className="flex flex-col md:flex-row items-center justify-between w-full">
+            <div className="text-left mb-6 md:mb-0 md:w-2/3">
+              <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                Welcome to the Library System
+              </h1>
+              <p className="text-white text-base md:text-2xl">
+                {user?.role === 'admin'
+                  ? 'Manage books, users, and transactions efficiently.'
+                  : 'Explore books and manage your reading history with ease.'}
+              </p>
+            </div>
+            <div className="md:w-1/3 flex justify-center">
+              <img
+                src="/hero.png"
+                alt="Library Decoration"
+                className="rounded-lg object-contain mr-6"
+                style={{ width: '100%', maxWidth: 400, maxHeight: 300, height: 'auto' }}
+              />
             </div>
           </div>
+        </div>
+
+        {/* ✅ Landing Page untuk yang belum login */}
+        {!user && (
+          <div className="w-full">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+              <div className="bg-blue-50 rounded-xl p-6 shadow text-left">
+                <FaBookOpen className="text-3xl text-blue-700 mb-3" />
+                <h3 className="font-bold text-lg text-blue-700 mb-2">Discover Books</h3>
+                <p className="text-sm text-gray-600">Browse through curated collections and find your next favorite book with ease.</p>
+              </div>
+              <div className="bg-blue-50 rounded-xl p-6 shadow text-left">
+                <FaClipboardList className="text-3xl text-blue-700 mb-3" />
+                <h3 className="font-bold text-lg text-blue-700 mb-2">Track Reading</h3>
+                <p className="text-sm text-gray-600">Keep track of books you've borrowed and read with a personalized dashboard.</p>
+              </div>
+              <div className="bg-blue-50 rounded-xl p-6 shadow text-left">
+                <FaShieldAlt className="text-3xl text-blue-700 mb-3" />
+                <h3 className="font-bold text-lg text-blue-700 mb-2">Simple & Secure</h3>
+                <p className="text-sm text-gray-600">Enjoy a seamless and secure experience tailored for students and admins alike.</p>
+              </div>
+            </div>
+
+            <div className="flex justify-center">
+              <a href="/login">
+                <button className="btn btn-primary text-white px-6 py-2 rounded-lg">
+                  Get Started
+                </button>
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* ✅ Dashboard untuk Mahasiswa */}
         {user?.role === 'mahasiswa' && (
           <div className="w-full mt-8">
             <div className="mb-8">
               <div className="text-left">
-                <h2 className="text-lg font-bold text-left px-4 py-2 bg-[#CCDDFB] text-white shadow-md rounded-full inline-block max-w-fit ml-0 mb-10">Popular Collection</h2>
+                <h2 className="text-lg font-bold text-left px-4 py-2 bg-[#CCDDFB] text-white shadow-md rounded-full inline-block max-w-fit ml-0 mb-10">
+                  Popular Collection
+                </h2>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
                 {topBooks.map(book => (
@@ -103,9 +141,12 @@ const Dashboard = () => {
                 ))}
               </div>
             </div>
+
             <div>
               <div className="text-left">
-                <h2 className="text-lg font-bold text-left px-4 py-2 mt-4 bg-[#CCDDFB] text-white  shadow-md rounded-full inline-block max-w-fit mb-10">Latest Collection</h2>
+                <h2 className="text-lg font-bold text-left px-4 py-2 mt-4 bg-[#CCDDFB] text-white shadow-md rounded-full inline-block max-w-fit mb-10">
+                  Latest Collection
+                </h2>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
                 {latestBooks.map(book => (

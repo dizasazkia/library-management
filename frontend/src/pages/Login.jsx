@@ -24,29 +24,29 @@ const Login = () => {
   };
 
   return (
-    <div className="hero min-h-screen bg-base-200">
-      <div className="hero-content flex-col">
+    <div className="hero min-h-screen bg-[#CCDDFB]">
+      <div className="hero-content flex-col ">
         <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <h2 className="card-title">Masuk</h2>
+          <div className="card-body bg-white rounded-md w-80">
+            <h2 className="card-title text-black mb-5">Login</h2>
             {error && <div className="alert alert-error">{error}</div>}
             {loading && <div className="loading loading-spinner"></div>}
             <input
               type="text"
               placeholder="Username"
-              className="input input-bordered mb-2"
+              className="input input-bordered bg-blue-100 text-gray-700 mb-5"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
             <input
               type="password"
               placeholder="Password"
-              className="input input-bordered mb-2"
+              className="input input-bordered bg-blue-100 text-gray-700 mb-5"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
             <button className="btn btn-primary" onClick={handleLogin} disabled={loading}>
-              Masuk
+              Login
             </button>
           </div>
         </div>
